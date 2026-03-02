@@ -1,2 +1,5 @@
-discord.py>=2.6.0,<2.8.0
-aiohttp>=3.8.1
+Starting Container
+Traceback (most recent call last):
+  File "/app/Avancement_bot.py", line 5, in <module>
+    from dotenv import load_dotenv
+ModuleNotFoundError: No module named 'dotenv'
