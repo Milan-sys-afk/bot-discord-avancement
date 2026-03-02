@@ -1,65 +1,39 @@
+# Avancement_bot.py
+import os
 import discord
 from discord.ext import commands
-from discord import app_commands
-import os
+from dotenv import load_dotenv
 
-# --- Variables d'environnement ---
-TOKEN = os.getenv("TOKEN_AVANCEMENT")  # Token bot sur Railway
+# Charger le token et le guild_id depuis les variables d'environnement
+load_dotenv()
+TOKEN = os.getenv("DISCORD_TOKEN")
 GUILD_ID = int(os.getenv("GUILD_ID"))  # ID du serveur Discord
 
-# --- Intents ---
+# Intents nécessaires (pour les rôles et membres)
 intents = discord.Intents.default()
-intents.members = True         # nécessaire pour assigner les rôles
-intents.message_content = True # optionnel, si tu veux lire des messages
+intents.members = True  # Privileged intent
+intents.guilds = True
 
-# --- Client et CommandTree ---
+# Création du bot
 client = commands.Bot(command_prefix="!", intents=intents)
-tree = app_commands.CommandTree(client)
 
-# --- Commande /role ---
-@tree.command(
-    name="role",
-    description="Assigner un rôle d'avancement à un membre",
-    guild=discord.Object(id=GUILD_ID)
-)
-@app_commands.describe(
-    role="Nom du rôle à assigner (Trad, Check, Clean, Edit)",
-    membre="Membre concerné"
-)
-async def role(interaction: discord.Interaction, role: str, membre: discord.Member):
-    guild = interaction.guild
-    role_obj = discord.utils.get(guild.roles, name=role)
-    if not role_obj:
-        await interaction.response.send_message(f"Rôle '{role}' introuvable.", ephemeral=True)
-        return
-    
-    await membre.add_roles(role_obj)
-    await interaction.response.send_message(f"{membre.mention} a reçu le rôle '{role}'.", ephemeral=True)
-
-# --- Commande /status ---
-@tree.command(
-    name="status",
-    description="Voir qui a quel rôle d'avancement",
-    guild=discord.Object(id=GUILD_ID)
-)
-async def status(interaction: discord.Interaction):
-    guild = interaction.guild
-    roles = ["Trad", "Check", "Clean", "Edit", "QEdit"]
-    embed = discord.Embed(title="Avancement des membres", color=0x00ff00)
-    
-    for role_name in roles:
-        role_obj = discord.utils.get(guild.roles, name=role_name)
-        if role_obj:
-            members = [m.mention for m in role_obj.members]
-            embed.add_field(name=role_name, value=", ".join(members) if members else "Aucun", inline=False)
-    
-    await interaction.response.send_message(embed=embed, ephemeral=True)
-
-# --- Event on_ready ---
+# --- EVENTS ---
 @client.event
 async def on_ready():
-    await tree.sync(guild=discord.Object(id=GUILD_ID))
-    print(f"{client.user} connecté !")
+    # Synchronisation des commandes slash sur le serveur
+    guild = discord.Object(id=GUILD_ID)
+    await client.tree.sync(guild=guild)
+    print(f"Bot prêt. Connecté comme {client.user}")
 
-# --- Run Bot ---
+# --- COMMANDES SLASH ---
+@client.tree.command(name="role", description="Attribuer un rôle à un membre")
+@discord.app_commands.describe(member="Membre à qui attribuer le rôle", role="Rôle à attribuer")
+async def role(interaction: discord.Interaction, member: discord.Member, role: discord.Role):
+    try:
+        await member.add_roles(role)
+        await interaction.response.send_message(f"{member.mention} a reçu le rôle {role.name}", ephemeral=True)
+    except Exception as e:
+        await interaction.response.send_message(f"Erreur : {str(e)}", ephemeral=True)
+
+# --- LANCEMENT ---
 client.run(TOKEN)
