@@ -1,16 +1,3 @@
-import os
-import json
-import discord
-from discord import app_commands, Interaction
-from discord.ext import commands
-
-
-# Charger le token
-
-TOKEN = os.getenv("DISCORD_TOKEN_AVANCEMENT")
-if not TOKEN:
-    raise ValueError("DISCORD_TOKEN non défini dans Railway")
-    
 import discord
 from discord import app_commands
 from discord.ext import commands
@@ -43,8 +30,9 @@ profiles_db = {}
 # ====== EVENTS ======
 @bot.event
 async def on_ready():
-    await bot.tree.sync()
-    print(f"Bot connecté : {bot.user}")
+    guild = discord.Object(id=TON_ID_DE_SERVEUR)
+    await bot.tree.sync(guild=guild)
+    print("Bot connecté + commandes sync")
 
 # ====== /NEW_SERIE ======
 @bot.tree.command(name="new_serie", description="Ajouter une nouvelle série")
@@ -238,4 +226,5 @@ async def on_ready():
     print(f"Bot Avancement connecté en tant que {client.user}")
 
 client.run(TOKEN)
+
 
